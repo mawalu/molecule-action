@@ -22,6 +22,7 @@ ARG PACKAGES="\
     docker \
     git \
     openssh-client \
+    ansible-lint \
     "
 
 ARG PIP_INSTALL_ARGS="\
