@@ -1,53 +1,21 @@
 ---
-name: DockerHub CI
-
+name: Publish Docker image
 on:
   push:
     branches:
       - master
-      - releases/*
-    paths:
-      - 'Dockerfile'
-  pull_request:
-
-env:
-  DOCKER_IMAGE_NAME: gofrolist/molecule
-  DOCKER_FILE: Dockerfile
-
 jobs:
-  build:
+  push_to_registry:
+    name: Push Docker image to GitHub Packages
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-
-      - name: Build Docker image
-        run: >
-          docker build . --file ${DOCKER_FILE}
-          -t ${DOCKER_IMAGE_NAME}:${GITHUB_SHA}
-          -t ${DOCKER_IMAGE_NAME}:latest
-
-      - name: Login to Docker registry
-        run: >
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" |
-          docker login
-          -u ${{ secrets.DOCKERHUB_USER }}
-          --password-stdin
-
-      - name: Push Docker image
-        run: |
-          docker push ${DOCKER_IMAGE_NAME}:${GITHUB_SHA}
-          docker push ${DOCKER_IMAGE_NAME}:latest
-
-  molecule:
-    needs:
-      - build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
         with:
-          path: "${{ github.repository }}"
-
-      - name: Molecule
-        uses: docker://gofrolist/molecule:latest
-        with:
-          molecule_options: --version
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: mawalu/molecule-action/molecule
+          tag_with_ref: true
